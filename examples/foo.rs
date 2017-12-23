@@ -42,7 +42,7 @@ fn main() {
     let mut build = Vec::with_capacity(1000);
     for i in 0..1000 {
         let new_image = base_image.clone();
-        let img = convolve(new_image, &gaussian_convoloution, EdgeMode::Extend)
+        let img = convolve(&new_image.to_luma(), &gaussian_convoloution, &EdgeMode::Extend)
             .expect("convolving");
         let k = i % 20;
         build.push(img.get_pixel(3, k).data[0]);
