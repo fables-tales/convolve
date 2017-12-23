@@ -4,7 +4,7 @@ use std::f64;
 
 #[derive(Debug)]
 pub enum ConvolutionError {
-    ConvolutionIsNotWellShaped,:
+    ConvolutionIsNotWellShaped,
     ConvolutionDoesNotContainNumbers,
 }
 
