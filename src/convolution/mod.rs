@@ -13,19 +13,22 @@ fn is_correctly_dimensionsed(convolution: &[f64]) -> bool {
 }
 
 pub struct Convolution<'a> {
-    convolution: &'a[f64],
+    convolution: &'a [f64],
     size: usize,
     min_value: f64,
     max_value: f64,
 }
 
-impl <'a> Convolution<'a> {
-    pub fn new(values: &'a[f64]) -> Result<Convolution<'a>, ConvolutionError> {
-        if values.iter().cloned().any(|x| x.is_infinite() || x.is_nan()) {
-            return Err(ConvolutionError::ConvolutionDoesNotContainNormalNumbers)
+impl<'a> Convolution<'a> {
+    pub fn new(values: &'a [f64]) -> Result<Convolution<'a>, ConvolutionError> {
+        if values.iter().cloned().any(
+            |x| x.is_infinite() || x.is_nan(),
+        )
+        {
+            return Err(ConvolutionError::ConvolutionDoesNotContainNormalNumbers);
         }
         if !is_correctly_dimensionsed(values) {
-            return Err(ConvolutionError::ConvolutionIsNotSquare)
+            return Err(ConvolutionError::ConvolutionIsNotSquare);
         }
 
         let convolution_size = (values.len() as f64).sqrt().floor() as usize;
@@ -42,7 +45,7 @@ impl <'a> Convolution<'a> {
             maximal_negative(values)
         };
 
-        Ok(Convolution{
+        Ok(Convolution {
             convolution: values,
             size: convolution_size,
             min_value: min_value.clone(),
@@ -58,12 +61,12 @@ impl <'a> Convolution<'a> {
         if self.max_value == self.min_value {
             value as u8
         } else {
-            ((value - self.min_value)/(self.max_value-self.min_value)) as u8
+            ((value - self.min_value) / (self.max_value - self.min_value)) as u8
         }
     }
 }
 
-impl <'a> Index<(usize, usize)> for Convolution<'a> {
+impl<'a> Index<(usize, usize)> for Convolution<'a> {
     type Output = f64;
 
     fn index(&self, index: (usize, usize)) -> &Self::Output {
@@ -88,10 +91,19 @@ fn sum_of_negatives(values: &[f64]) -> f64 {
 }
 
 fn minimal_positive(values: &[f64]) -> f64 {
-    values.iter().cloned().filter(|&x| x >= 0.0).min_by(|&x, &y| x.partial_cmp(&y).unwrap()).unwrap()
+    values
+        .iter()
+        .cloned()
+        .filter(|&x| x >= 0.0)
+        .min_by(|&x, &y| x.partial_cmp(&y).unwrap())
+        .unwrap()
 }
 
 fn maximal_negative(values: &[f64]) -> f64 {
-    values.iter().cloned().filter(|&x| x < 0.0).max_by(|&x, &y| x.partial_cmp(&y).unwrap()).unwrap()
+    values
+        .iter()
+        .cloned()
+        .filter(|&x| x < 0.0)
+        .max_by(|&x, &y| x.partial_cmp(&y).unwrap())
+        .unwrap()
 }
-
