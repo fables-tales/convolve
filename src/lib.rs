@@ -15,7 +15,7 @@ pub enum EdgeMode {
 
 pub fn convolve(
     image_in: DynamicImage,
-    convolution: Convolution,
+    convolution: &Convolution,
     edge_mode: EdgeMode,
 ) -> Result<GrayImage, ConvolutionError> {
     let gray_image = image_in.to_luma();
@@ -47,9 +47,7 @@ pub fn convolve(
 }
 
 fn get_pixel(image: &image::GrayImage, x: i64, y: i64, edge_mode: &EdgeMode) -> u8 {
-    println!("x y: {} {}", x, y);
     let (proj_x, proj_y) = edge_project(x, y, image.width(), image.height(), edge_mode);
-    println!("pj: {} {}", proj_x, proj_y);
 
     return image.get_pixel(proj_x, proj_y).data[0];
 }
@@ -136,6 +134,7 @@ mod tests {
 
     use super::{convolve, EdgeMode, Convolution};
     use image::{self, GrayImage};
+
     #[test]
     fn gaussian_blur_blurs() {
         let base_image = image::open("img/sam.jpg").expect("sam.jpg failed to open");
@@ -170,7 +169,7 @@ mod tests {
             ],
         ).expect("making a convolution");
 
-        let actual = convolve(base_image, gaussian_convoloution, EdgeMode::Extend)
+        let actual = convolve(base_image, &gaussian_convoloution, EdgeMode::Extend)
             .expect("unwrapping image");
         let expected = image::open("img/gaussian.png")
             .expect("loading guassian.png")
@@ -188,7 +187,7 @@ mod tests {
 
         assert_eq!(
             testable_repr(
-                convolve(base_image, identity_convoloution, EdgeMode::Extend)
+                convolve(base_image, &identity_convoloution, EdgeMode::Extend)
                     .expect("unwrapping image"),
             ),
             testable_repr(gray_base)
