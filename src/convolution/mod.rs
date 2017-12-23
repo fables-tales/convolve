@@ -1,15 +1,19 @@
+
 use std::ops::Index;
 use std::f64;
 
 #[derive(Debug)]
 pub enum ConvolutionError {
-    ConvolutionIsNotSquare,
-    ConvolutionDoesNotContainNormalNumbers,
+    ConvolutionIsNotWellShaped,:
+    ConvolutionDoesNotContainNumbers,
 }
 
 fn is_correctly_dimensionsed(convolution: &[f64]) -> bool {
     let sqrt = (convolution.len() as f64).sqrt();
-    sqrt.floor() * sqrt.floor() == convolution.len() as f64 && sqrt.floor() as u64 % 2 == 1
+    let is_perfect_square = (sqrt.floor() * sqrt.floor()) as usize == convolution.len();
+    let is_odd_dimensionsed = sqrt as u64 % 2 == 1;
+
+    is_perfect_square && is_odd_dimensionsed
 }
 
 pub struct Convolution<'a> {
@@ -25,10 +29,10 @@ impl<'a> Convolution<'a> {
             |x| x.is_infinite() || x.is_nan(),
         )
         {
-            return Err(ConvolutionError::ConvolutionDoesNotContainNormalNumbers);
+            return Err(ConvolutionError::ConvolutionDoesNotContainNumbers);
         }
         if !is_correctly_dimensionsed(values) {
-            return Err(ConvolutionError::ConvolutionIsNotSquare);
+            return Err(ConvolutionError::ConvolutionIsNotWellShaped);
         }
 
         let convolution_size = (values.len() as f64).sqrt().floor() as usize;
@@ -48,8 +52,8 @@ impl<'a> Convolution<'a> {
         Ok(Convolution {
             convolution: values,
             size: convolution_size,
-            min_value: min_value.clone(),
-            max_value: max_value.clone(),
+            min_value: min_value,
+            max_value: max_value,
         })
     }
 
@@ -57,6 +61,7 @@ impl<'a> Convolution<'a> {
         self.size
     }
 
+    #[allow(float_cmp)]
     pub fn compute_adjusted_pixel_value(&self, value: f64) -> u8 {
         if self.max_value == self.min_value {
             value as u8

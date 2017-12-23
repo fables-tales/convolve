@@ -1,3 +1,4 @@
+#![allow(unknown_lints)]
 #![deny(warnings)]
 extern crate image;
 
@@ -5,7 +6,7 @@ mod convolution;
 
 pub use convolution::{Convolution, ConvolutionError};
 
-use image::{DynamicImage, GrayImage, ImageBuffer};
+use image::{GrayImage, ImageBuffer};
 
 pub enum EdgeMode {
     Extend,
@@ -14,25 +15,24 @@ pub enum EdgeMode {
 }
 
 pub fn convolve(
-    image_in: DynamicImage,
+    image_in: &GrayImage,
     convolution: &Convolution,
-    edge_mode: EdgeMode,
+    edge_mode: &EdgeMode,
 ) -> Result<GrayImage, ConvolutionError> {
-    let gray_image = image_in.to_luma();
-    let mut build = Vec::with_capacity((gray_image.width() * gray_image.height()) as usize);
+    let mut build = Vec::with_capacity((image_in.width() * image_in.height()) as usize);
 
-    for (x, y, _) in gray_image.enumerate_pixels() {
+    for (x, y, _) in image_in.enumerate_pixels() {
         let mut this_pixel = 0.0;
         let offset = (convolution.get_size() as i64) / 2;
         for y_offset in -offset..offset + 1 {
             for x_offset in -offset..offset + 1 {
                 let p = get_pixel(
-                    &gray_image,
-                    x as i64 + x_offset,
-                    y as i64 + y_offset,
-                    &edge_mode,
+                    image_in,
+                    i64::from(x) + x_offset,
+                    i64::from(y) + y_offset,
+                    edge_mode,
                 );
-                this_pixel += p as f64 *
+                this_pixel += f64::from(p) *
                     convolution[((x_offset + offset) as usize, (y_offset + offset) as usize)];
             }
 
@@ -42,26 +42,26 @@ pub fn convolve(
     }
 
     Ok(
-        ImageBuffer::from_raw(gray_image.width(), gray_image.height(), build).unwrap(),
+        ImageBuffer::from_raw(image_in.width(), image_in.height(), build).unwrap(),
     )
 }
 
 fn get_pixel(image: &image::GrayImage, x: i64, y: i64, edge_mode: &EdgeMode) -> u8 {
     let (proj_x, proj_y) = edge_project(x, y, image.width(), image.height(), edge_mode);
 
-    return image.get_pixel(proj_x, proj_y).data[0];
+    image.get_pixel(proj_x, proj_y).data[0]
 }
 
 fn edge_project(x: i64, y: i64, width: u32, height: u32, edge_mode: &EdgeMode) -> (u32, u32) {
-    let width = width as i64;
-    let height = height as i64;
+    let width = i64::from(width);
+    let height = i64::from(height);
 
     if x >= 0 && x <= width - 1 && y >= 0 && y <= height - 1 {
         return (x as u32, y as u32);
     }
 
-    match edge_mode {
-        &EdgeMode::Extend => {
+    match *edge_mode {
+        EdgeMode::Extend => {
             let ret_x = if x < 0 {
                 0
             } else if x > width - 1 {
@@ -81,7 +81,7 @@ fn edge_project(x: i64, y: i64, width: u32, height: u32, edge_mode: &EdgeMode) -
 
             (ret_x as u32, ret_y as u32)
         }
-        &EdgeMode::Wrap => {
+        EdgeMode::Wrap => {
             let ret_x = if x < 0 {
                 x + width
             } else if x > width - 1 {
@@ -101,7 +101,7 @@ fn edge_project(x: i64, y: i64, width: u32, height: u32, edge_mode: &EdgeMode) -
 
             (ret_x as u32, ret_y as u32)
         }
-        &EdgeMode::Mirror => {
+        EdgeMode::Mirror => {
             let ret_x = if x < 0 {
                 -x - 1
             } else if x > width - 1 {
@@ -169,7 +169,7 @@ mod tests {
             ],
         ).expect("making a convolution");
 
-        let actual = convolve(base_image, &gaussian_convoloution, EdgeMode::Extend)
+        let actual = convolve(&base_image.to_luma(), &gaussian_convoloution, &EdgeMode::Extend)
             .expect("unwrapping image");
         let expected = image::open("img/gaussian.png")
             .expect("loading guassian.png")
@@ -187,7 +187,7 @@ mod tests {
 
         assert_eq!(
             testable_repr(
-                convolve(base_image, &identity_convoloution, EdgeMode::Extend)
+                convolve(&base_image.to_luma(), &identity_convoloution, &EdgeMode::Extend)
                     .expect("unwrapping image"),
             ),
             testable_repr(gray_base)
